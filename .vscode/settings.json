@@ -1,0 +1,27 @@
+// {
+//   "editor.codeActionsOnSave": {
+//     "source.fixAll": "explicit"
+//   },
+//   "eslint.validate": ["javascript", "typescript", "typescriptreact"],
+//   "editor.formatOnSave": true,
+//   "[typescriptreact]": {
+//     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+//   }
+// }
+
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "eslint.validate": ["javascript", "typescript", "typescriptreact"],
+  "editor.formatOnSave": true,
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
