@@ -1,11 +1,14 @@
-import { graphqlClient } from "@/lib/graphqlClient";
-import { GET_CHARACTERS } from "@/graphql/queries";
-import { GetCharactersResponse } from "@/graphql/types";
+// import { graphqlClient } from "@/lib/graphqlClient";
+// import { GET_CHARACTERS } from "@/graphql/queries";
+// import { GetCharactersResponse } from "@/graphql/types";
+import { mockCharacters } from "@/mocks/mockCharacters";
 import CharacterCard from "@/components/CharacterCard";
 
 export default async function CharactersPage() {
-  const data = await graphqlClient.request<GetCharactersResponse>(GET_CHARACTERS, { page: 1 });
-  const characters = data.characters.results;
+  // const data = await graphqlClient.request<GetCharactersResponse>(GET_CHARACTERS, { page: 1 });
+  // const characters = data.characters.results;
+
+  const characters = mockCharacters;
 
   return (
     <main className="p-6">
