@@ -2,15 +2,18 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
 type CharacterCardProps = {
   id: string;
   name: string;
   image: string;
   species: string;
+  onRemove?: (id: string) => void;
 };
 
-export default function CharacterCard({ id, name, image, species }: CharacterCardProps) {
+export default function CharacterCard({ id, name, image, species, onRemove }: CharacterCardProps) {
   const [isAdded, setIsAdded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -56,25 +59,32 @@ export default function CharacterCard({ id, name, image, species }: CharacterCar
   };
 
   return (
-    <div className="text-center p-4 border rounded-lg shadow-sm bg-white">
-      <Image
-        src={image}
-        alt={name}
-        width={128}
-        height={128}
-        className="rounded-full mx-auto mb-2"
-      />
-      <h2 className="text-lg font-semibold">{name}</h2>
-      <p className="text-gray-500">{species}</p>
+    <div className="text-center p-4 rounded-lg shadow-lg border border-[rgba(57,57,57,1)]">
+      <Link href={`/characters/${id}`}>
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.3 }}
+          className="relative w-[128px] h-[128px] overflow-hidden rounded-full mx-auto"
+        >
+          <Image src={image} alt={name} fill className="object-cover" />
+        </motion.div>
+        <h2 className="text-lg text-gray-300 hover:text-white font-semibold transition">{name}</h2>
+        <p className="text-gray-500">{species}</p>
+      </Link>
       {!isLoading && (
         <button
           onClick={handleAddToFavorites}
-          className={`mt-4 px-4 py-2 rounded text-white text-sm transition ${
-            isAdded ? "bg-green-500 cursor-default" : "bg-blue-600 hover:bg-blue-700"
+          className={`mt-4 px-4 py-2 rounded text-white text-sm transition  ${
+            isAdded ? "button-sucsess cursor-default" : "button-primary hover:bg-blue-700"
           }`}
           disabled={isAdded}
         >
           {isAdded ? "Added" : "Add to Favorites"}
+        </button>
+      )}
+      {onRemove && (
+        <button onClick={() => onRemove(id)} className="mt-2 text-sm text-red-600 hover:underline">
+          Remove
         </button>
       )}
 

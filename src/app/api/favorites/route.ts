@@ -12,24 +12,53 @@ type Character = {
 };
 
 export async function GET() {
-  const file = await fs.readFile(filePath, "utf-8");
-  const favorites: Character[] = JSON.parse(file);
-  return NextResponse.json(favorites);
+  try {
+    const file = await fs.readFile(filePath, "utf-8");
+    const favorites: Character[] = JSON.parse(file);
+    return NextResponse.json(favorites);
+  } catch {
+    return NextResponse.json([], { status: 200 });
+  }
 }
 
 export async function POST(req: Request) {
   const newFavorite: Character = await req.json();
 
-  const file = await fs.readFile(filePath, "utf-8");
-  const favorites: Character[] = JSON.parse(file);
+  try {
+    const file = await fs.readFile(filePath, "utf-8");
+    const favorites: Character[] = JSON.parse(file);
 
-  const exists = favorites.find((char) => char.id === newFavorite.id);
-  if (exists) {
-    return NextResponse.json({ message: "Already in favorites" }, { status: 409 });
+    const exists = favorites.find((char) => char.id === newFavorite.id);
+    if (exists) {
+      return NextResponse.json({ message: "Already in favorites" }, { status: 409 });
+    }
+
+    const updated = [...favorites, newFavorite];
+    await fs.writeFile(filePath, JSON.stringify(updated, null, 2), "utf-8");
+
+    return NextResponse.json({ message: "Added to favorites" });
+  } catch {
+    return NextResponse.json({ message: "Error saving favorite" }, { status: 500 });
+  }
+}
+
+// DELETE /api/favorites?id=123
+export async function DELETE(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json({ message: "Missing ID" }, { status: 400 });
   }
 
-  const updated = [...favorites, newFavorite];
-  await fs.writeFile(filePath, JSON.stringify(updated, null, 2), "utf-8");
+  try {
+    const file = await fs.readFile(filePath, "utf-8");
+    const favorites: Character[] = JSON.parse(file);
+    const updated = favorites.filter((char) => char.id !== id);
 
-  return NextResponse.json({ message: "Added to favorites" });
+    await fs.writeFile(filePath, JSON.stringify(updated, null, 2), "utf-8");
+    return NextResponse.json({ message: "Removed from favorites" });
+  } catch {
+    return NextResponse.json({ message: "Error removing favorite" }, { status: 500 });
+  }
 }

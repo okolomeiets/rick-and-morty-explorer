@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 export default function CharacterCardSkeleton() {
   return (
     <motion.div
-      className="text-center p-4 border rounded-lg shadow-sm bg-white"
+      className="text-center p-4 border border-[rgba(57,57,57,1)] rounded-lg shadow-sm"
       initial={{ opacity: 0.5 }}
       animate={{ opacity: [0.5, 1, 0.5] }}
       transition={{
