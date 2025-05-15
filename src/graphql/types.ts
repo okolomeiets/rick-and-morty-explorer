@@ -5,8 +5,16 @@ export type Character = {
   species: string;
 };
 
+export type PageInfo = {
+  pages: number;
+  next: number | null;
+  prev: number | null;
+  count: number;
+};
+
 export type GetCharactersResponse = {
   characters: {
+    info: PageInfo;
     results: Character[];
   };
 };
