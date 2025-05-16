@@ -41,7 +41,6 @@ export default function FavoritesList() {
       removeFavorite(id).catch((err) => {
         console.error("Failed to remove from server:", err);
 
-        // Откат персонажа обратно в UI
         updateOptimisticFavorites({ type: "restore", payload: charToRestore });
       });
     });
