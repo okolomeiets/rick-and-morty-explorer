@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useFavoritesStore } from "@/store/favoritesStore";
+import { useState } from "react";
 
 type CharacterCardProps = {
   id: string;
@@ -11,51 +12,33 @@ type CharacterCardProps = {
   image: string;
   species: string;
   onRemove?: (id: string) => void;
+  isInFavoritesPage?: boolean;
 };
 
-export default function CharacterCard({ id, name, image, species, onRemove }: CharacterCardProps) {
-  const [isAdded, setIsAdded] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+export default function CharacterCard({
+  id,
+  name,
+  image,
+  species,
+  onRemove,
+  isInFavoritesPage,
+}: CharacterCardProps) {
+  const { favorites, addFavorite, removeFavorite } = useFavoritesStore();
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const res = await fetch("/api/favorites");
-        if (!res.ok) return;
-
-        const data = await res.json();
-        const exists = data.find((char: any) => char.id === id);
-        setIsAdded(!!exists);
-      } catch (err) {
-        console.error("Failed to check favorites");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    check();
-  }, [id]);
+  const isAdded = favorites.some((char) => char.id === id);
 
   const handleAddToFavorites = async () => {
     try {
-      const res = await fetch("/api/favorites", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, name, image, species }),
-      });
-
-      if (res.status === 409) {
-        setError("Already in favorites");
-      } else if (res.ok) {
-        setIsAdded(true);
-        setError("");
-      } else {
-        setError("Something went wrong");
-      }
-    } catch (err) {
-      setError("Network error");
+      await addFavorite({ id, name, image, species });
+      setError("");
+    } catch {
+      setError("Something went wrong");
     }
+  };
+
+  const handleRemove = () => {
+    onRemove?.(id);
   };
 
   return (
@@ -71,19 +54,24 @@ export default function CharacterCard({ id, name, image, species, onRemove }: Ch
         <h2 className="text-lg text-gray-300 hover:text-white font-semibold transition">{name}</h2>
         <p className="text-gray-500">{species}</p>
       </Link>
-      {!isLoading && (
+
+      {!isAdded && !isInFavoritesPage && (
         <button
           onClick={handleAddToFavorites}
-          className={`mt-4 px-4 py-2 rounded text-white text-sm transition  ${
-            isAdded ? "button-sucsess cursor-default" : "button-primary hover:bg-blue-700"
-          }`}
-          disabled={isAdded}
+          className="mt-4 px-4 py-2 rounded text-white text-sm button-primary hover:bg-blue-700 transition"
         >
-          {isAdded ? "Added" : "Add to Favorites"}
+          Add to Favorites
         </button>
       )}
-      {onRemove && (
-        <button onClick={() => onRemove(id)} className="mt-2 text-sm text-red-600 hover:underline">
+
+      {isAdded && !isInFavoritesPage && (
+        <button className="mt-4 px-4 py-2 text-sm button-sucsess cursor-default">
+          Added to favorites
+        </button>
+      )}
+
+      {isAdded && isInFavoritesPage && (
+        <button onClick={handleRemove} className="mt-2 text-sm text-red-600 hover:underline">
           Remove
         </button>
       )}

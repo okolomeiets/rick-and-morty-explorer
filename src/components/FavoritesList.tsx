@@ -1,63 +1,59 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useTransition, useOptimistic, useState } from "react";
 import CharacterCard from "@/components/CharacterCard";
-
-type Character = {
-  id: string;
-  name: string;
-  image: string;
-  species: string;
-};
+import { useFavoritesStore } from "@/store/favoritesStore";
+import type { Character } from "@/store/favoritesStore";
 
 export default function FavoritesList() {
-  const [favorites, setFavorites] = useState<Character[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const favorites = useFavoritesStore((state) => state.favorites);
+  const hasLoaded = useFavoritesStore((state) => state.hasLoaded);
+  const loadFavorites = useFavoritesStore((state) => state.loadFavorites);
+  const removeFavorite = useFavoritesStore((state) => state.removeFavorite);
+
+  const [isPending, startTransition] = useTransition();
+
+  const [optimisticFavorites, updateOptimisticFavorites] = useOptimistic(
+    favorites,
+    (prev: Character[], action: { type: string; payload?: any }) => {
+      switch (action.type) {
+        case "remove":
+          return prev.filter((char) => char.id !== action.payload);
+        case "restore":
+          return [action.payload, ...prev];
+        default:
+          return prev;
+      }
+    },
+  );
 
   useEffect(() => {
-    const controller = new AbortController();
+    if (!hasLoaded) loadFavorites();
+  }, [hasLoaded, loadFavorites]);
 
-    const load = async () => {
-      try {
-        const res = await fetch("/api/favorites", { signal: controller.signal });
-        if (!res.ok) throw new Error("Failed to fetch");
+  const handleRemove = (id: string) => {
+    const charToRestore = optimisticFavorites.find((char) => char.id === id);
+    if (!charToRestore) return;
 
-        const data = await res.json();
+    startTransition(() => {
+      updateOptimisticFavorites({ type: "remove", payload: id });
 
-        setFavorites(data);
-        setLoading(false);
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name !== "AbortError") {
-          console.error("Error loading favorites:", err);
-          setError("Failed to load favorites");
-          setLoading(false);
-        }
-      }
-    };
+      removeFavorite(id).catch((err) => {
+        console.error("Failed to remove from server:", err);
 
-    load();
-
-    return () => controller.abort();
-  }, []);
-
-  const handleRemove = async (id: string) => {
-    try {
-      await fetch(`/api/favorites?id=${id}`, { method: "DELETE" });
-      setFavorites((prev) => prev.filter((char) => char.id !== id));
-    } catch (err) {
-      console.error("Failed to remove character", err);
-    }
+        // Откат персонажа обратно в UI
+        updateOptimisticFavorites({ type: "restore", payload: charToRestore });
+      });
+    });
   };
-
-  if (loading) return <p className="text-gray-600">Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
-  if (favorites.length === 0) return <p className="text-gray-600">No favorites yet.</p>;
+  if (optimisticFavorites.length === 0) {
+    return <p className="text-gray-600">No favorites yet.</p>;
+  }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {favorites.map((char) => (
-        <CharacterCard key={char.id} {...char} onRemove={handleRemove} />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 opacity-100 transition-opacity duration-300">
+      {optimisticFavorites.map((char) => (
+        <CharacterCard key={char.id} {...char} onRemove={handleRemove} isInFavoritesPage={true} />
       ))}
     </div>
   );
